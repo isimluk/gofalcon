@@ -9,7 +9,6 @@ import (
 	"github.com/crowdstrike/gofalcon/falcon"
 	"github.com/crowdstrike/gofalcon/falcon/client"
 	"github.com/crowdstrike/gofalcon/falcon/client/intel"
-	"github.com/crowdstrike/gofalcon/falcon/models"
 	"github.com/crowdstrike/gofalcon/pkg/falcon_util"
 )
 
@@ -82,16 +81,16 @@ filter`)
 	fmt.Println("]")
 }
 
-func queryIntelIndicators(client *client.CrowdStrikeAPISpecification, filter, sort *string) (<-chan *models.DomainPublicIndicatorV3, <-chan error) {
-	indicatorsChannel := make(chan *models.DomainPublicIndicatorV3)
+func queryIntelIndicators(client *client.CrowdStrikeAPISpecification, filter, sort *string) (<-chan string, <-chan error) {
+	indicatorsChannel := make(chan string)
 	errorChannel := make(chan error)
 
 	go func() {
 		limit := int64(1000)
 		var err error
 
-		for response := (*intel.QueryIntelIndicatorEntitiesOK)(nil); response.HasNextPage(); {
-			response, err = client.Intel.QueryIntelIndicatorEntities(&intel.QueryIntelIndicatorEntitiesParams{
+		for response := (*intel.QueryIntelIndicatorIdsOK)(nil); response.HasNextPage(); {
+			response, err = client.Intel.QueryIntelIndicatorIds(&intel.QueryIntelIndicatorIdsParams{
 				Context: context.Background(),
 				Filter:  filter,
 				Sort:    sort,
