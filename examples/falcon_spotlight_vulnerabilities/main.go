@@ -88,15 +88,26 @@ func queryVulnerabilities(client *client.CrowdStrikeAPISpecification, filter str
 	go func() {
 		lastSeen := (*string)(nil)
 		for {
-			response, err := client.SpotlightVulnerabilities.CombinedQueryVulnerabilities(
-				&spotlight_vulnerabilities.CombinedQueryVulnerabilitiesParams{
-					Context: context.Background(),
-					Facet:   []string{"cve", "host_info", "remediation", "evaluation_logic"},
-					Filter:  filter,
-					Sort:    sort,
-					After:   lastSeen,
-				},
-			)
+			limit := int64(5000)
+			var response *spotlight_vulnerabilities.CombinedQueryVulnerabilitiesOK
+			var err error
+
+			for attempt := 0; attempt < 10; attempt++ {
+				response, err = client.SpotlightVulnerabilities.CombinedQueryVulnerabilities(
+					&spotlight_vulnerabilities.CombinedQueryVulnerabilitiesParams{
+						Context: context.Background(),
+						Facet:   []string{"cve", "host_info", "remediation", "evaluation_logic"},
+						Filter:  filter,
+						Sort:    sort,
+						Limit:   &limit,
+						After:   lastSeen,
+					},
+				)
+				if err == nil {
+					break
+				}
+				limit /= 2
+			}
 
 			if err != nil {
 				panic(falcon.ErrorExplain(err))
